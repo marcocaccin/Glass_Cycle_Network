@@ -1,13 +1,15 @@
 import numpy as np
-from quippy.atoms import Atoms
+from ase.io import read as aseread
+from matscipy.neighbours import neighbour_list
 import networkx as nx
-from quippy.ringstat import distance_map
 
-at = Atoms('../reduced_1ayer.xyz')
-positions = at.positions[:,:2]
-at.set_cutoff(3.8) # 2 * 1.6 + some extra for elongation. visual inspection first!
-at.calc_connect()
-adjacency_matrix = np.array(distance_map(at, at.n, at.n) == 1).astype(int)
+at = aseread('../reduced_1ayer.xyz', format='extxyz')
+positions = at.get_positions()[:,:2]
+cutoff = 3.8 # 2 * 1.6 + some extra for elongation. visual inspection first!
+ni, nj = neighbour_list('ij', at, cutoff)
+adjacency_matrix = np.zeros((len(at), len(at))).astype(int)
+for i, j in zip (ni, nj):
+    adjacency_matrix[i,j] = 1
 graph = nx.from_numpy_matrix(np.array(adjacency_matrix))
 
 all_cycles = []
